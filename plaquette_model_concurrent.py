@@ -59,7 +59,7 @@ def calculate_B4(magnetization_array):
     M2 = np.mean(magnetization_array**2)
 
     return 1 - M4 / (3 * M2**2)
-
+    
 
 def run_one_temperature(args):
     length, temp, J, K, n_thermal, n_measure = args
@@ -83,14 +83,14 @@ def run_one_temperature(args):
 
 
 def main():
-    temps = np.linspace(1, 5, 20)
-    L = [5, 10, 15]
+    temps = np.linspace(2, 4, 40)
+    L = [15,30]
 
     K = 0.2
     J = 1
 
-    n_thermal = 5000
-    n_measure = 500000
+    n_thermal = 50000
+    n_measure = 5000000
 
     tasks = [(length, temp, J, K, n_thermal, n_measure)
              for length in L for temp in temps]

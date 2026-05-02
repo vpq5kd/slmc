@@ -85,40 +85,49 @@ def calculate_B4(magnetization_array):
 
     return  1 - M4/(m2_squared*3)
 
-def main():
-    temps = np.linspace(1,5,20)
-    L = [5,10,15]
 
+def autocorrelation(magnetization_array):
+    M = np.abs(magnetization_array)
+    M_mean = np.mean(M)
+
+    C = []
+
+    for tau in tqdm(range(len(M))):
+        if tau == 0:
+            val = np.mean(M*M)
+        else:
+            val = np.mean(M[:-tau] * M[tau:])
+
+        C.append(val - M_mean**2)
+
+    return np.array(C), len(M)
+    
+
+def main():
+    T = 2.5 
+    N = 40
     K = 0.2
     J = 1
 
+    spins = np.random.choice([-1,1], size = (N,N))
+    beta = 1/T
+   
+    magnetization_array = []
+    for _ in tqdm(range(5000)):
+        spins = metropolis_step(spins, J, K, beta)
+    for _ in tqdm(range(500000)):
+        spins = metropolis_step(spins, J, K, beta)
+        magnetization = np.sum(spins)
+        magnetization_array.append(magnetization)
+
+    C,M_amount = autocorrelation(magnetization_array)
+    delta_taus = np.arange(M_amount)
     plt.figure()
+    plt.plot(C, delta_taus, label=f"Naive Approach",marker='o',linestyle='None', color="mediumvioletred")
 
-    for length in L:
-        print(f"running {length}")
-        
-        B4s = []
-        for temp in tqdm(temps):
-            magnetization_array = []
-
-            spins = np.random.choice([-1,1], size = (length, length))
-            beta = 1/temp
-            
-            for _ in range(5000):
-                spins = metropolis_step(spins, J, K, beta)
-            for _ in range(500000):
-                spins = metropolis_step(spins, J, K, beta)
-                magnetization = np.sum(spins)
-                magnetization_array.append(magnetization)
-
-            mangetization_array_np = np.array(magnetization_array)
-            B4 = calculate_B4(mangetization_array_np)
-            B4s.append(B4)
-
-        plt.plot(temps, B4s, label=f"{length}",marker='o',linestyle='None')
     
-    plt.xlabel(r"$T$")
-    plt.ylabel(r"$B_{4}$",rotation=0)
+    plt.xlabel(r"$\Delta \tau$")
+    plt.ylabel(r"$\langle M(t)M(t+\Delta \tau)\rangle-\langle M \rangle^2$",rotation=0)
     plt.legend()
     plt.show()
 
