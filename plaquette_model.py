@@ -92,7 +92,7 @@ def autocorrelation(magnetization_array):
 
     C = []
 
-    for tau in tqdm(range(len(M))):
+    for tau in tqdm(range(5000)):
         if tau == 0:
             val = np.mean(M*M)
         else:
@@ -100,7 +100,7 @@ def autocorrelation(magnetization_array):
 
         C.append(val - M_mean**2)
 
-    return np.array(C), len(M)
+    return np.array(C), 5000
     
 
 def main():
@@ -115,7 +115,7 @@ def main():
     magnetization_array = []
     for _ in tqdm(range(5000)):
         spins = metropolis_step(spins, J, K, beta)
-    for _ in tqdm(range(500000)):
+    for _ in tqdm(range(1000000)):
         spins = metropolis_step(spins, J, K, beta)
         magnetization = np.sum(spins)
         magnetization_array.append(magnetization)
@@ -123,7 +123,7 @@ def main():
     C,M_amount = autocorrelation(magnetization_array)
     delta_taus = np.arange(M_amount)
     plt.figure()
-    plt.plot(C, delta_taus, label=f"Naive Approach",marker='o',linestyle='None', color="mediumvioletred")
+    plt.plot(delta_taus, C, label=f"Naive Approach",marker='o',linestyle='None', color="mediumvioletred")
 
     
     plt.xlabel(r"$\Delta \tau$")
