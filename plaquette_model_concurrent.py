@@ -83,13 +83,13 @@ def run_one_temperature(args):
 
 
 def main():
-    temps = np.linspace(2, 4, 40)
-    L = [15,30]
+    temps = np.linspace(2, 4, 30)
+    L = [10,20,40]
 
     K = 0.2
     J = 1
 
-    n_thermal = 50000
+    n_thermal = 5000
     n_measure = 5000000
 
     tasks = [(length, temp, J, K, n_thermal, n_measure)

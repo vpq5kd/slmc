@@ -87,40 +87,54 @@ def calculate_B4(magnetization_array):
 
 
 def autocorrelation(magnetization_array):
-    M = np.abs(magnetization_array)
-    M_mean = np.mean(M)
+    M = np.array(magnetization_array)
+    M_mean_2 = np.mean(M)**2
 
     C = []
+    lag = 800
+    for dt in tqdm(np.arange(lag)):
+        A_0 = 0
+        for i in range(len(M)-dt):
+            A_0 += M[i]*M[i+dt]
 
-    for tau in tqdm(range(5000)):
-        if tau == 0:
-            val = np.mean(M*M)
-        else:
-            val = np.mean(M[:-tau] * M[tau:])
+        A_0 *= 1/(len(M) -dt)
+        C.append(A_0-M_mean_2)
 
-        C.append(val - M_mean**2)
+    return np.array(C), lag
+        
+def spin_spin_correlations(spins):
+    Lx, Ly = spins.shape
 
-    return np.array(C), 5000
+    C1 = 0
+    C2 = 0
+    C3 = 0
+
+    for x in range(Lx):
+        for y in range(Ly):
+            s = spins[x,y]
+            
+            right = spins[(x+1)%Lx, y]
+            up = spins[x, (y+1)%Ly]
+
+            C1 +=  s * right
+            C1 +=  s * up
+
+            up_right = spins[(x + 1) % Lx, (y + 1) % Ly]
+            up_left  = spins[(x - 1) % Lx, (y + 1) % Ly]
+
+            C2 += s * up_right
+            C2 += s * up_left
+
+            right2 = spins[(x + 2) % Lx, y]
+            up2    = spins[x, (y + 2) % Ly]
+
+            C3 += s * right2
+            C3 += s * up2
     
+    return C1, C2, C3
 
-def main():
-    T = 2.5 
-    N = 40
-    K = 0.2
-    J = 1
+def display_autocorrelation(C, M_amount):
 
-    spins = np.random.choice([-1,1], size = (N,N))
-    beta = 1/T
-   
-    magnetization_array = []
-    for _ in tqdm(range(5000)):
-        spins = metropolis_step(spins, J, K, beta)
-    for _ in tqdm(range(1000000)):
-        spins = metropolis_step(spins, J, K, beta)
-        magnetization = np.sum(spins)
-        magnetization_array.append(magnetization)
-
-    C,M_amount = autocorrelation(magnetization_array)
     delta_taus = np.arange(M_amount)
     plt.figure()
     plt.plot(delta_taus, C, label=f"Naive Approach",marker='o',linestyle='None', color="mediumvioletred")
@@ -131,6 +145,43 @@ def main():
     plt.legend()
     plt.show()
 
+def display_energy_vs_c1(C1_array, energy_array, N):
+    C1_array = np.array(C1_array)/N**2
+    energy_array = np.array(energy_array)/N**2
+
+    plt.figure()
+    plt.plot(C1_array, energy_array, label="samples", marker='o',linestyle='None',markerfacecolor='None',color='forestgreen')
+    plt.xlabel(r"$\frac{C_1}{N}$")
+    plt.ylabel(r"$\frac{E}{N}$",rotation=0)
+    plt.legend()
+    plt.show()
+
+def main():
+    T = 2.493
+    N = 40
+    K = 0.2
+    J = 1
+
+    spins = np.random.choice([-1,1], size = (N,N))
+    beta = 1/T
+   
+    magnetization_array = []
+    energy_array = []
+    C1_array = []
+    for step in tqdm(range(10000000)):
+        spins = metropolis_step(spins, J, K, beta)
+        
+        if step %  N**2 == 0:
+            magnetization = np.abs(np.sum(spins)) / N**2
+            magnetization_array.append(magnetization)
+            
+            C1, _, _ = spin_spin_correlations(spins)
+            C1_array.append(C1)
+
+            energy = hamiltonian(spins, J, K)
+            energy_array.append(energy)
+    
+    display_energy_vs_c1(C1_array, energy_array, N)
 
 
 main()
