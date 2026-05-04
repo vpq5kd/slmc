@@ -183,7 +183,8 @@ def main():
     K = 0.2
     J = 1
 
-    equilibrium_spins = 50*(N**2)
+    #equilibrium_spins = 50*(N**2)
+    equilibrium_spins = 0
 
     spins = np.random.choice([-1,1], size = (N,N))
     beta = 1/T
@@ -192,7 +193,7 @@ def main():
     energy_array = []
     spin_spin_correlations_array = []
 
-    for step in tqdm(range(1000*N**2)):
+    for step in tqdm(range(20000*(N**2))):
         spins = metropolis_step(spins, J, K, beta)
         
         if step>equilibrium_spins and step % N**2 == 0:
@@ -205,6 +206,9 @@ def main():
             energy = hamiltonian(spins, J, K)
             energy_array.append(energy)
                     
+           
+    ac, m_amount = autocorrelation(magnetization_array)
+    display_autocorrelation(ac, m_amount)
 
     filename = "run_constats.npz"
     np.savez(filename, magnetization_array=np.array(magnetization_array), energy_array=np.array(energy_array), spin_spin_correlations_array=np.array(spin_spin_correlations_array))
@@ -229,5 +233,5 @@ def main_load():
 
     ac, m_amount = autocorrelation(magnetization_array)
     display_autocorrelation(ac, m_amount)
-main()
+#main()
 main_load()
