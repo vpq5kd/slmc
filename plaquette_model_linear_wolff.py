@@ -3,6 +3,8 @@ import matplotlib.pyplot as plt
 from tqdm import tqdm
 from sklearn.linear_model import LinearRegression
 
+rng = np.random.default_rng()
+
 def hamiltonian(spins, J, K):
     Lx, Ly = spins.shape
 
@@ -24,58 +26,69 @@ def hamiltonian(spins, J, K):
 
     return -J*H_nn - K*H_p
 
-def delta_energy_flip(spins, x, y, J, K):
-    Lx, Ly = spins.shape
-    s = spins[x, y]
+def hamiltonian_effecitve(spins, J1):
+    Lx, Ly = spins.shape()
 
-    nn_sum = (
-        spins[(x + 1) % Lx, y]
-        + spins[(x - 1) % Lx, y]
-        + spins[x, (y + 1) % Ly]
-        + spins[x, (y - 1) % Ly]
-    )
+    C1 = 0
+    for x in range(Lx):
+        for y in range(Ly):
+            s = spins[x,y]
+            right = spins[(x+1)%Lx, y]
+            up = spins[x, (y+1)%Ly]
 
-    dE_nn = 2 * J * s * nn_sum
+            C1 +=  s * right
+            C1 +=  s * up
 
-    plaquettes = [
-        (x, y),
-        ((x - 1) % Lx, y),
-        (x, (y - 1) % Ly),
-        ((x - 1) % Lx, (y - 1) % Ly),
-    ]
+    return -J1*C1
 
-    p_sum = 0
+def wolff_cluster_logic(N,T,J,J1,K, spins):
+    
+    E_A = hamiltonian(spins,J,K)
+    E_A_eff = hamiltonian_effective(spins, J1)
 
-    for px, py in plaquettes:
-        p = (
-            spins[px, py]
-            * spins[(px + 1) % Lx, py]
-            * spins[px, (py + 1) % Ly]
-            * spins[(px + 1) % Lx, (py + 1) % Ly]
-        )
-        p_sum += p
+    spins_test = spins.copy()
 
-    dE_p = 2 * K * p_sum
+    random_site_x = rng.integers(N)
+    random_site_y = rng.integers(N)
 
-    return dE_nn + dE_p
+    random_site = (random_site_x, random_site_y)
+    cluster = set()
+    cluster.add(random_site)
+    f_old = set()
+    f_old.add(random_site)
 
+    while len(f_old) > 0:
+        f_new = set()
+        for test_pair in f_old:
+            test_pair_x = test_pair[1]
+            test_pair_y = test_pair[0]
 
-def metropolis_step(spins, J, K, beta):
-    Lx, Ly = spins.shape
+            right = (test_pair_y, (test_pair_x + 1)%N)
+            down = ((test_pair_y + 1)%N, test_pair_x)
+            left = (test_pair_y, (test_pair_x - 1)%N)
+            up = ((test_pair_y - 1)%N, test_pair_x)
 
-    x = np.random.randint(0,Lx)
-    y = np.random.randint(0,Ly)
+            neighbors = [up, down, right, left]
 
-    dE = delta_energy_flip(spins, x, y, J, K)
+            for neighbor in neighbors:
 
-    acceptance_probability = min(1, np.exp(-beta*dE))
+                neighbor_x = neighbor[1]
+                neighbor_y = neighbor[0]
 
-    rand_val = np.random.uniform(0,1)
+                if (neighbor not in cluster) and (spins_test_test[neighbor_y,neighbor_x] == spins_test[test_pair_y, test_pair_x]):
 
-    if rand_val <= acceptance_probability:
-        spins[x,y] *= -1 
+                    B = 1/T
+                    if np.random.rand() < (1-np.exp(-2*B)):
+                        f_new.add(neighbor)
+                        cluster.add(neighbor)
+        f_old = f_new
+        
+    for spin in cluster:
+        x = spin[1]
+        y = spin[0]
+        spins[y,x]*=-1
+
     return spins
-
 
 def magnetization(spins):
     return np.sum(spins)
@@ -165,19 +178,6 @@ def display_energy_vs_c1(ssca, energy_array, N, E_0, j_values):
     plt.legend()
     plt.show()
 
-def linear_fit_data(spin_spin_correlations_array, energy_array):
-    ssca = np.array(spin_spin_correlations_array)
-    ea = np.array(energy_array)
-
-    model = LinearRegression()
-    model.fit(ssca, ea)
-
-    E0 = model.intercept_
-    coeffs = model.coef_
-    j_values = -coeffs
-
-    print(E0, j_values)
-    return j_values, E0
 
 def main():
     T = 2.493
@@ -195,46 +195,24 @@ def main():
     energy_array = []
     spin_spin_correlations_array = []
 
-    for step in tqdm(range(30000*(N**2))):
-        spins = metropolis_step(spins, J, K, beta)
+    for step in tqdm(range(30000)):
+        spins = wolff_cluster_logic(N,T,spins) 
         
-        if step>equilibrium_spins and step % N**2 == 0:
-            magnetization = np.abs(np.sum(spins))/N**2
-            magnetization_array.append(magnetization)
-            
-            C1, C2, C3 = spin_spin_correlations(spins)
-            spin_spin_correlations_array.append([C1,C2,C3])
+
+        magnetization = np.abs(np.sum(spins))/N**2
+        magnetization_array.append(magnetization)
         
-            energy = hamiltonian(spins, J, K)
-            energy_array.append(energy)
+        C1, C2, C3 = spin_spin_correlations(spins)
+        spin_spin_correlations_array.append([C1,C2,C3])
+    
+        energy = hamiltonian(spins, J, K)
+        energy_array.append(energy)
                     
            
     ac, m_amount = autocorrelation(magnetization_array)
     display_autocorrelation(ac, m_amount)
 
-    filename = "run_constats.npz"
-    np.savez(filename, magnetization_array=np.array(magnetization_array), energy_array=np.array(energy_array), spin_spin_correlations_array=np.array(spin_spin_correlations_array))
+    #filename = "run_constats.npz"
+    #np.savez(filename, magnetization_array=np.array(magnetization_array), energy_array=np.array(energy_array), spin_spin_correlations_array=np.array(spin_spin_correlations_array))
 
-
-def main_load():
-
-    N = 40
-    K = 0.2
-    J = 1
-
-    filename = "run_constats.npz"
-    data = np.load(filename)
-    energy_array = data["energy_array"]
-    spin_spin_correlations_array = data["spin_spin_correlations_array"]
-    magnetization_array = data["magnetization_array"]
-
-
-    j_values, E0 = linear_fit_data((spin_spin_correlations_array[:,0]/N**2).reshape(-1,1), energy_array/N**2)
-    display_energy_vs_c1(spin_spin_correlations_array,energy_array,N,E0,j_values)
-
-
-    ac, m_amount = autocorrelation(magnetization_array)
-    
-    display_autocorrelation(ac, m_amount)
 main()
-#main_load()
