@@ -142,16 +142,22 @@ def display_autocorrelation(C, M_amount):
 
     
     plt.xlabel(r"$\Delta \tau$")
-    plt.ylabel(r"$\langle M(t)M(t+\Delta \tau)\rangle-\langle M \rangle^2$",rotation=0)
+    plt.ylabel(r"$\langle M(t)M(t+\Delta \tau)\rangle-\langle M \rangle^2$")
     plt.legend()
     plt.show()
 
-def display_energy_vs_c1(C1_array, energy_array, N):
-    C1_array = np.array(C1_array)/N**2
+def display_energy_vs_c1(ssca, energy_array, N, E_0, j_values):
+    
+    ssca = np.array(ssca)
+    
+    C1_array = ssca[:,0]/N**2
     energy_array = np.array(energy_array)/N**2
+
+    effective_energy = E_0 - j_values[0]*C1_array
 
     plt.figure()
     plt.plot(C1_array, energy_array, label="samples", marker='o',linestyle='None',markerfacecolor='None',color='forestgreen')
+    plt.plot(C1_array, effective_energy, label='fit',color='black')
     plt.xlabel(r"$\frac{C_1}{N}$")
     plt.ylabel(r"$\frac{E}{N}$",rotation=0)
     plt.legend()
@@ -166,10 +172,10 @@ def linear_fit_data(spin_spin_correlations_array, energy_array):
 
     E0 = model.intercept_
     coeffs = model.coef_
-    
+    j_values = -coeffs
 
-    print(E0, coeffs)
-
+    print(E0, j_values)
+    return j_values, E0
 
 def main():
     T = 2.493
@@ -177,7 +183,7 @@ def main():
     K = 0.2
     J = 1
 
-    equilibrium_spins = 4*(N**2)
+    equilibrium_spins = 50*(N**2)
 
     spins = np.random.choice([-1,1], size = (N,N))
     beta = 1/T
@@ -186,7 +192,7 @@ def main():
     energy_array = []
     spin_spin_correlations_array = []
 
-    for step in tqdm(range(10000000)):
+    for step in tqdm(range(1000*N**2)):
         spins = metropolis_step(spins, J, K, beta)
         
         if step>equilibrium_spins and step % N**2 == 0:
@@ -201,12 +207,27 @@ def main():
                     
 
     filename = "run_constats.npz"
-    np.savez(filename, magnetization_array=magnetization_array, energy_array=energy_array, spin_spin_correlations_array=spin_spin_correlations_array)
+    np.savez(filename, magnetization_array=np.array(magnetization_array), energy_array=np.array(energy_array), spin_spin_correlations_array=np.array(spin_spin_correlations_array))
 
-    linear_fit_data(spin_spin_correlations_array, energy_array)
 
 def main_load():
-    filename = "run_constats.npz"
-    m, e, ssc = np.load(filename)
 
+    N = 40
+    K = 0.2
+    J = 1
+
+    filename = "run_constats.npz"
+    data = np.load(filename)
+    energy_array = data["energy_array"]
+    spin_spin_correlations_array = data["spin_spin_correlations_array"]
+    magnetization_array = data["magnetization_array"]
+
+
+    j_values, E0 = linear_fit_data((spin_spin_correlations_array[:,0]/N**2).reshape(-1,1), energy_array/N**2)
+    display_energy_vs_c1(spin_spin_correlations_array,energy_array,N,E0,j_values)
+
+
+    ac, m_amount = autocorrelation(magnetization_array)
+    display_autocorrelation(ac, m_amount)
 main()
+main_load()
