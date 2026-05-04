@@ -232,6 +232,7 @@ def main_load():
 
 
     ac, m_amount = autocorrelation(magnetization_array)
+    
     display_autocorrelation(ac, m_amount)
 #main()
 main_load()
