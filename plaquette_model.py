@@ -1,6 +1,7 @@
 import numpy as np
 import matplotlib.pyplot as plt
 from tqdm import tqdm
+from sklearn.linear_model import LinearRegression
 
 def hamiltonian(spins, J, K):
     Lx, Ly = spins.shape
@@ -156,32 +157,56 @@ def display_energy_vs_c1(C1_array, energy_array, N):
     plt.legend()
     plt.show()
 
+def linear_fit_data(spin_spin_correlations_array, energy_array):
+    ssca = np.array(spin_spin_correlations_array)
+    ea = np.array(energy_array)
+
+    model = LinearRegression()
+    model.fit(ssca, ea)
+
+    E0 = model.intercept_
+    coeffs = model.coef_
+    
+
+    print(E0, coeffs)
+
+
 def main():
     T = 2.493
     N = 40
     K = 0.2
     J = 1
 
+    equilibrium_spins = 4*(N**2)
+
     spins = np.random.choice([-1,1], size = (N,N))
     beta = 1/T
    
     magnetization_array = []
     energy_array = []
-    C1_array = []
+    spin_spin_correlations_array = []
+
     for step in tqdm(range(10000000)):
         spins = metropolis_step(spins, J, K, beta)
         
-        if step %  N**2 == 0:
+        if step>equilibrium_spins and step % N**2 == 0:
             magnetization = np.abs(np.sum(spins)) / N**2
             magnetization_array.append(magnetization)
             
-            C1, _, _ = spin_spin_correlations(spins)
-            C1_array.append(C1)
-
+            C1, C2, C3 = spin_spin_correlations(spins)
+            spin_spin_correlations_array.append([C1,C2,C3])
+        
             energy = hamiltonian(spins, J, K)
             energy_array.append(energy)
-    
-    display_energy_vs_c1(C1_array, energy_array, N)
+                    
 
+    filename = "run_constats.npz"
+    np.savez(filename, magnetization_array=magnetization_array, energy_array=energy_array, spin_spin_correlations_array=spin_spin_correlations_array)
+
+    linear_fit_data(spin_spin_correlations_array, energy_array)
+
+def main_load():
+    filename = "run_constats.npz"
+    m, e, ssc = np.load(filename)
 
 main()
