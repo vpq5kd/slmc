@@ -26,8 +26,8 @@ def hamiltonian(spins, J, K):
 
     return -J*H_nn - K*H_p
 
-def hamiltonian_effecitve(spins, J1):
-    Lx, Ly = spins.shape()
+def hamiltonian_effective(spins, J1):
+    Lx, Ly = spins.shape
 
     C1 = 0
     for x in range(Lx):
@@ -75,10 +75,10 @@ def wolff_cluster_logic(N,T,J,J1,K, spins):
                 neighbor_x = neighbor[1]
                 neighbor_y = neighbor[0]
 
-                if (neighbor not in cluster) and (spins_test_test[neighbor_y,neighbor_x] == spins_test[test_pair_y, test_pair_x]):
+                if (neighbor not in cluster) and (spins_test[neighbor_y,neighbor_x] == spins_test[test_pair_y, test_pair_x]):
 
                     B = 1/T
-                    if np.random.rand() < (1-np.exp(-2*B)):
+                    if np.random.rand() < (1-np.exp(-2*B*J1)):
                         f_new.add(neighbor)
                         cluster.add(neighbor)
         f_old = f_new
@@ -86,7 +86,17 @@ def wolff_cluster_logic(N,T,J,J1,K, spins):
     for spin in cluster:
         x = spin[1]
         y = spin[0]
-        spins[y,x]*=-1
+        spins_test[y,x]*=-1
+
+    
+    E_B = hamiltonian(spins_test,J,K)
+    E_B_eff = hamiltonian_effective(spins_test, J1)
+    
+    beta = 1/T
+
+    activation = max(1,np.exp(-beta*((E_B-E_B_eff)-(E_A-E_A_eff))))
+    if np.random.rand() < activation:
+        return spins_test
 
     return spins
 
@@ -147,18 +157,21 @@ def spin_spin_correlations(spins):
     
     return C1, C2, C3
 
-def display_autocorrelation(C, M_amount):
+def display_autocorrelation(ac_tuple_array):
 
-    delta_taus = np.arange(M_amount)
     plt.figure()
-    plt.plot(delta_taus, C, label=f"Naive Approach",marker='o',linestyle='None', color="mediumvioletred")
-    
-    
+    for C, M_amount, label, marker, color in ac_tuple_array:
+
+        delta_taus = np.arange(M_amount)
+        plt.plot(delta_taus, C, label=label, marker=marker, linestyle='None', color=color)
+        
+        
     plt.xlabel(r"$\Delta \tau$")
     plt.ylabel(r"$\langle M(t)M(t+\Delta \tau)\rangle-\langle M \rangle^2$")
-    plt.xlim(0, 800)
+    plt.xlim(-25, 800)
     plt.ylim(-0.001,0.035)
     plt.legend()
+
     plt.show()
 
 def display_energy_vs_c1(ssca, energy_array, N, E_0, j_values):
@@ -179,13 +192,13 @@ def display_energy_vs_c1(ssca, energy_array, N, E_0, j_values):
     plt.show()
 
 
-def main():
-    T = 2.493
+def run_simulation(numsteps, J1):
+    T = 2.490
     N = 40
     K = 0.2
     J = 1
 
-    equilibrium_spins = 300*(N**2)
+    equilibrium_spins = 300
     equilibrium_spins = 0
 
     spins = np.random.choice([-1,1], size = (N,N))
@@ -195,8 +208,8 @@ def main():
     energy_array = []
     spin_spin_correlations_array = []
 
-    for step in tqdm(range(30000)):
-        spins = wolff_cluster_logic(N,T,spins) 
+    for step in tqdm(range(numsteps)):
+        spins = wolff_cluster_logic(N,T,J,J1,K,spins) 
         
 
         magnetization = np.abs(np.sum(spins))/N**2
@@ -210,9 +223,54 @@ def main():
                     
            
     ac, m_amount = autocorrelation(magnetization_array)
-    display_autocorrelation(ac, m_amount)
+    
+    return ac, m_amount
 
-    #filename = "run_constats.npz"
-    #np.savez(filename, magnetization_array=np.array(magnetization_array), energy_array=np.array(energy_array), spin_spin_correlations_array=np.array(spin_spin_correlations_array))
+def linear_fit_data(spin_spin_correlations_array, energy_array):
+    ssca = np.array(spin_spin_correlations_array)
+    ea = np.array(energy_array)
 
-main()
+    model = LinearRegression()
+    model.fit(ssca, ea)
+
+    E0 = model.intercept_
+    coeffs = model.coef_
+    j_values = -coeffs
+
+    print(E0, j_values)
+    return j_values, E0
+
+def load_metropolis(filename):
+
+    N = 40
+    K = 0.2
+    J = 1
+
+    data = np.load(filename)
+    energy_array = data["energy_array"]
+    spin_spin_correlations_array = data["spin_spin_correlations_array"]
+    magnetization_array = data["magnetization_array"]
+
+
+    j_values, E0 = linear_fit_data((spin_spin_correlations_array[:,0]/N**2).reshape(-1,1), energy_array/N**2)
+
+    ac, m_amount = autocorrelation(magnetization_array)
+    
+    return j_values, ac, m_amount
+
+def main():
+    numsteps = 10000
+    metropolis_filename = "run_constants.npz"
+
+    j_values, metropolis_auto_correlation, metropolis_m_amount = load_metropolis(metropolis_filename)
+    j1 = j_values[0]
+    wolff_auto_correlation, wolff_m_amount = run_simulation(numsteps, j1)
+    
+    wolff_tuple = (wolff_auto_correlation, wolff_m_amount, 'SLMC Approach', '+', 'palevioletred')
+    metro_tuple = (metropolis_auto_correlation, metropolis_m_amount, 'Naive Approach', 'x', 'cornflowerblue')
+
+    ac_array = [wolff_tuple, metro_tuple]
+
+    display_autocorrelation(ac_array)
+
+main() 
