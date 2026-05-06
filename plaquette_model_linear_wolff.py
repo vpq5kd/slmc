@@ -100,16 +100,6 @@ def wolff_cluster_logic(N,T,J,J1,K, spins):
 
     return spins
 
-def magnetization(spins):
-    return np.sum(spins)
-
-def calculate_B4(magnetization_array):
-    M4 = np.mean(magnetization_array**4)
-    m2_squared = np.mean(magnetization_array**2)**2
-
-    return  1 - M4/(m2_squared*3)
-
-
 def autocorrelation(magnetization_array):
     M = np.array(magnetization_array)
     M_mean_2 = np.mean(M)**2
@@ -126,37 +116,6 @@ def autocorrelation(magnetization_array):
 
     return np.array(C), lag
         
-def spin_spin_correlations(spins):
-    Lx, Ly = spins.shape
-
-    C1 = 0
-    C2 = 0
-    C3 = 0
-
-    for x in range(Lx):
-        for y in range(Ly):
-            s = spins[x,y]
-            
-            right = spins[(x+1)%Lx, y]
-            up = spins[x, (y+1)%Ly]
-
-            C1 +=  s * right
-            C1 +=  s * up
-
-            up_right = spins[(x + 1) % Lx, (y + 1) % Ly]
-            up_left  = spins[(x - 1) % Lx, (y + 1) % Ly]
-
-            C2 += s * up_right
-            C2 += s * up_left
-
-            right2 = spins[(x + 2) % Lx, y]
-            up2    = spins[x, (y + 2) % Ly]
-
-            C3 += s * right2
-            C3 += s * up2
-    
-    return C1, C2, C3
-
 def display_autocorrelation(ac_tuple_array):
 
     plt.figure()
@@ -174,23 +133,6 @@ def display_autocorrelation(ac_tuple_array):
 
     plt.show()
 
-def display_energy_vs_c1(ssca, energy_array, N, E_0, j_values):
-    
-    ssca = np.array(ssca)
-    
-    C1_array = ssca[:,0]/N**2
-    energy_array = np.array(energy_array)/N**2
-
-    effective_energy = E_0 - j_values[0]*C1_array
-
-    plt.figure()
-    plt.plot(C1_array, energy_array, label="samples", marker='o',linestyle='None',markerfacecolor='None',color='forestgreen')
-    plt.plot(C1_array, effective_energy, label='fit',color='black')
-    plt.xlabel(r"$\frac{C_1}{N}$")
-    plt.ylabel(r"$\frac{E}{N}$",rotation=0)
-    plt.legend()
-    plt.show()
-
 
 def run_simulation(numsteps, J1):
     T = 2.490
@@ -205,21 +147,14 @@ def run_simulation(numsteps, J1):
     beta = 1/T
    
     magnetization_array = []
-    energy_array = []
-    spin_spin_correlations_array = []
 
     for step in tqdm(range(numsteps)):
         spins = wolff_cluster_logic(N,T,J,J1,K,spins) 
-        
 
         magnetization = np.abs(np.sum(spins))/N**2
         magnetization_array.append(magnetization)
         
-        C1, C2, C3 = spin_spin_correlations(spins)
-        spin_spin_correlations_array.append([C1,C2,C3])
     
-        energy = hamiltonian(spins, J, K)
-        energy_array.append(energy)
                     
            
     ac, m_amount = autocorrelation(magnetization_array)
@@ -259,7 +194,7 @@ def load_metropolis(filename):
     return j_values, ac, m_amount
 
 def main():
-    numsteps = 10000
+    numsteps = 30000
     metropolis_filename = "run_constants.npz"
 
     j_values, metropolis_auto_correlation, metropolis_m_amount = load_metropolis(metropolis_filename)
