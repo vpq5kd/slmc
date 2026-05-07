@@ -94,7 +94,7 @@ def wolff_cluster_logic(N,T,J,J1,K, spins):
     
     beta = 1/T
 
-    activation = max(1,np.exp(-beta*((E_B-E_B_eff)-(E_A-E_A_eff))))
+    activation = min(1,np.exp(-beta*((E_B-E_B_eff)-(E_A-E_A_eff))))
     if np.random.rand() < activation:
         return spins_test
 
@@ -242,4 +242,4 @@ def main_train():
     j1 = j_values[0]
     generate_training_data(numsteps, j1)
 
-main()
+main_train()
