@@ -42,6 +42,7 @@ def sample_rbm(spins, beta, rbm):
     F_A = rbm.free_energy(sigma_a).item()
     F_B = rbm.free_energy(sigma_b).item()
 
+    
     if np.random.rand() < min(1,np.exp(-beta*(E_B-E_A)+(F_B-F_A))):
         return spins_test
 

@@ -47,7 +47,7 @@ class RBM:
             )
         )
 
-        F = -visible_term - hidden_term
+        F = visible_term - hidden_term
 
         return F
     def sample_hidden(self, sigma):
