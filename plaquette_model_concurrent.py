@@ -64,6 +64,8 @@ def calculate_B4(magnetization_array):
 def run_one_temperature(args):
     length, temp, J, K, n_thermal, n_measure = args
 
+    n_thermal = n_thermal*length**2
+    n_measure = n_measure*length**2
     spins = np.random.choice([-1, 1], size=(length, length))
     beta = 1 / temp
 
@@ -89,8 +91,8 @@ def main():
     K = 0.2
     J = 1
 
-    n_thermal = 5000
-    n_measure = 5000000
+    n_thermal = 300
+    n_measure = 100000
 
     tasks = [(length, temp, J, K, n_thermal, n_measure)
              for length in L for temp in temps]
@@ -103,8 +105,9 @@ def main():
         for future in tqdm(as_completed(futures), total=len(futures)):
             results.append(future.result())
 
-    plt.figure()
+    color_dict = {10:"firebrick",20:"goldenrod",40:"blueviolet"}
 
+    plt.figure()
     for length in L:
         length_results = [
             (temp, B4)
@@ -123,6 +126,7 @@ def main():
             label=f"{length}",
             marker="o",
             linestyle="None",
+            color=color_dict[length]
         )
 
     plt.xlabel(r"$T$")

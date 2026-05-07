@@ -141,7 +141,6 @@ def run_simulation(numsteps, J1):
     J = 1
 
     equilibrium_spins = 300
-    equilibrium_spins = 0
 
     spins = np.random.choice([-1,1], size = (N,N))
     beta = 1/T
@@ -193,8 +192,26 @@ def load_metropolis(filename):
     
     return j_values, ac, m_amount
 
+def generate_training_data(numsteps, J1):
+    T = 2.490
+    N = 40
+    K = 0.2
+    J = 1
+
+    spins = np.random.choice([-1,1], size = (N,N))
+    beta = 1/T
+   
+    data_set_amount = 5000
+    data_set = []
+    for step in tqdm(range(numsteps)):
+        spins = wolff_cluster_logic(N,T,J,J1,K,spins)
+        if step > numsteps-data_set_amount:
+            data_set.append(spins.reshape(-1))
+
+    np.savez("data_set.npz",data_set=data_set)
+
 def main():
-    numsteps = 30000
+    numsteps = 10000
     metropolis_filename = "run_constants.npz"
 
     j_values, metropolis_auto_correlation, metropolis_m_amount = load_metropolis(metropolis_filename)
@@ -208,4 +225,13 @@ def main():
 
     display_autocorrelation(ac_array)
 
-main() 
+
+def main_train():
+    numsteps = 30000
+    metropolis_filename = "run_constants.npz"
+
+    j_values, metropolis_auto_correlation, metropolis_m_amount = load_metropolis(metropolis_filename)
+    j1 = j_values[0]
+    generate_training_data(numsteps, j1)
+
+main_train()
