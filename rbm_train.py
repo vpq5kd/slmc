@@ -3,7 +3,7 @@ import matplotlib.pyplot as plt
 from BRBM_cuda import RBM
 
 def train_model():
-    data_filename = "data_set.npz"
+    data_filename = "naive_data_set_fixed.npz"
     load_dict = np.load(data_filename)
 
     data_set = load_dict["data_set"]
@@ -73,7 +73,7 @@ def display_c1_validation(c1_tuples,N):
     plt.show()
 
 def load_model():
-    rbm = RBM(1600,128)
+    rbm = RBM(1600,256)
     rbm.load_model("model.npz")
     return rbm
 
@@ -96,7 +96,7 @@ def main():
     N = 40
     rbm_tuple = (rbm_energy_array, rbm_c1_array, 'RBM', 'o','mediumvioletred')
     naive_tuple = (naive_energy_array, naive_c1_array, 'Naive', '+', 'forestgreen')
-    c1_tuples = [rbm_tuple, naive_tuple]
+    c1_tuples = [naive_tuple, rbm_tuple]
     display_c1_validation(c1_tuples,N)
 
 main()
