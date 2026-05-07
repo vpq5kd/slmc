@@ -158,6 +158,7 @@ def run_simulation(numsteps, J1):
            
     ac, m_amount = autocorrelation(magnetization_array)
     
+    np.savez("wolff_vals.npz",ac=ac,m_amount=np.array([m_amount]))
     return ac, m_amount
 
 def linear_fit_data(spin_spin_correlations_array, energy_array):
@@ -173,6 +174,13 @@ def linear_fit_data(spin_spin_correlations_array, energy_array):
 
     print(E0, j_values)
     return j_values, E0
+
+def load_wolff(filename):
+    data = np.load(filename)
+    ac = data["ac"]
+    m_amount = data["m_amount"][0]
+    
+    return ac, m_amount
 
 def load_metropolis(filename):
 
@@ -211,7 +219,7 @@ def generate_training_data(numsteps, J1):
     np.savez("data_set.npz",data_set=data_set)
 
 def main():
-    numsteps = 10000
+    numsteps = 30000
     metropolis_filename = "run_constants.npz"
 
     j_values, metropolis_auto_correlation, metropolis_m_amount = load_metropolis(metropolis_filename)
@@ -234,4 +242,4 @@ def main_train():
     j1 = j_values[0]
     generate_training_data(numsteps, j1)
 
-main_train()
+main()

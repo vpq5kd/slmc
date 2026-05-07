@@ -29,6 +29,27 @@ class RBM:
 
         return energy
 
+    def free_energy(self, sigma):
+
+        sigma = torch.as_tensor(
+            sigma,
+            dtype=torch.float32,
+            device=self.device
+        )
+
+        visible_term = self.theta_v @ sigma
+
+        hidden_input = sigma @ self.W - self.theta_h
+
+        hidden_term = torch.sum(
+            torch.log(
+                2 * torch.cosh(hidden_input)
+            )
+        )
+
+        F = -visible_term - hidden_term
+
+        return F
     def sample_hidden(self, sigma):
         sigma = sigma.to(self.device)
 
