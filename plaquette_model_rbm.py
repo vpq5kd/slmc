@@ -41,8 +41,10 @@ def sample_rbm(spins, beta, rbm):
     E_B = hamiltonian(spins_test, 1, 0.2)
     F_A = rbm.free_energy(sigma_a).item()
     F_B = rbm.free_energy(sigma_b).item()
-
     
+    print(E_A, E_B, F_A, F_B)
+    print(-beta*(E_B-E_A) + (F_B-F_A))
+    print(np.exp(-beta*(E_B-E_A)+(F_B-F_A))) 
     if np.random.rand() < min(1,np.exp(-beta*(E_B-E_A)+(F_B-F_A))):
         return spins_test
 
@@ -89,9 +91,10 @@ def main():
 
     numsteps = 5000
     rbm_slmc_filename = "rbm_slmc_vals"
-    
-    spins = np.random.choice([-1,1],size = (40,40))
-
+   
+    data = np.load("data_set.npz")
+    data_set = data["data_set"]
+    spins = data_set[5000].reshape(40,40)
     magnetization_array = []
     for step in tqdm(range(numsteps)):
         spins = sample_rbm(spins, beta, rbm)

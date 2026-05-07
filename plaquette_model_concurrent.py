@@ -92,7 +92,7 @@ def main():
     J = 1
 
     n_thermal = 300
-    n_measure = 50000
+    n_measure = 200000
 
     tasks = [(length, temp, J, K, n_thermal, n_measure)
              for length in L for temp in temps]
@@ -134,7 +134,7 @@ def main():
         )
 
     lr_array = np.array(lr_array)
-    np.savez("b4_data.npz")
+    np.savez("b4_data.npz",lr_array=lr_array)
     plt.xlabel(r"$T$")
     plt.ylabel(r"$B_{4}$", rotation=0)
     plt.legend()

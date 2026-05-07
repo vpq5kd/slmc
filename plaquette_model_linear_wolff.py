@@ -219,7 +219,7 @@ def generate_training_data(numsteps, J1):
     np.savez("data_set.npz",data_set=data_set)
 
 def main():
-    numsteps = 30000
+    numsteps = 50000
     metropolis_filename = "run_constants.npz"
 
     j_values, metropolis_auto_correlation, metropolis_m_amount = load_metropolis(metropolis_filename)
@@ -235,11 +235,11 @@ def main():
 
 
 def main_train():
-    numsteps = 30000
+    numsteps = 50000
     metropolis_filename = "run_constants.npz"
 
     j_values, metropolis_auto_correlation, metropolis_m_amount = load_metropolis(metropolis_filename)
     j1 = j_values[0]
     generate_training_data(numsteps, j1)
 
-main_train()
+main_load()

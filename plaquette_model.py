@@ -212,7 +212,7 @@ def main():
     ac, m_amount = autocorrelation(magnetization_array)
     display_autocorrelation(ac, m_amount)
 
-    filename = "run_constats.npz"
+    filename = "run_constants.npz"
     np.savez(filename, magnetization_array=np.array(magnetization_array), energy_array=np.array(energy_array), spin_spin_correlations_array=np.array(spin_spin_correlations_array))
 
 
@@ -222,7 +222,7 @@ def main_load():
     K = 0.2
     J = 1
 
-    filename = "run_constats.npz"
+    filename = "run_constants.npz"
     data = np.load(filename)
     energy_array = data["energy_array"]
     spin_spin_correlations_array = data["spin_spin_correlations_array"]
@@ -264,4 +264,4 @@ def main_train():
     filename = "naive_data_set.npz"
     np.savez(filename, data_set=data_set)
 
-main_train()
+main()

@@ -1,6 +1,6 @@
 import numpy as np
 import matplotlib.pyplot as plt
-from BRBM_cuda import RBM
+from BRBM_cuda_full import RBM
 
 def train_model():
     data_filename = "naive_data_set_fixed.npz"
