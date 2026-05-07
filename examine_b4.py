@@ -1,7 +1,7 @@
 import numpy as np
 import matplotlib.pyplot as plt
 
-data = np.load("b4_data_2.npz")
+data = np.load("b4_data.npz")
 lr_array = data["lr_array"]
 
 plt.figure()
@@ -22,7 +22,7 @@ for length_results in lr_array:
         color=color_dict[length]
     )
     length_index += 1
-plt.axvline(2.48275862, color='black',linestyle='--',label='Critical Point')
+plt.axvline(2.490, color='black',linestyle='--',label='Critical Point')
 plt.xlabel(r"$T$")
 plt.ylabel(r"$B_{4}$", rotation=0)
 plt.legend()

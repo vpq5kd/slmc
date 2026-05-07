@@ -242,4 +242,4 @@ def main_train():
     j1 = j_values[0]
     generate_training_data(numsteps, j1)
 
-main_load()
+main()

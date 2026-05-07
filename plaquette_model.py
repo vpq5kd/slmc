@@ -264,4 +264,4 @@ def main_train():
     filename = "naive_data_set.npz"
     np.savez(filename, data_set=data_set)
 
-main()
+main_load()
