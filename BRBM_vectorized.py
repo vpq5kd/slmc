@@ -38,7 +38,7 @@ class RBM:
 
     def data_average_dw(self, data_set):
         tau_array = np.array([self.sample_hidden(sigma) for sigma in data_set])
-        de_dw_array = data_set.T @ tau_array
+        de_dw_array = (data_set.T @ tau_array).astype(float)
         de_dw_array /= len(data_set)
         
         return de_dw_array
@@ -51,7 +51,7 @@ class RBM:
             sigma_array = np.array([self.sample_visible(tau) for tau in tau_array])
             tau_array = np.array([self.sample_hidden(sigma) for sigma in sigma_array])
 
-        de_dw_array = sigma_array.T @ tau_array
+        de_dw_array = (sigma_array.T @ tau_array).astype(float)
         de_dw_array /= len(data_set)
         
         return de_dw_array
@@ -85,6 +85,21 @@ class RBM:
         data = np.load(filename)
         self.W = data["W"]
         self.epsilon_w_arr = data["epsilon_w_arr"]
+
+    def generate_rbm_states(self, num_states=1000, melting_iterations=1000):
+        states = []
+        sigma = self.rng.choice([-1,1], size=self.N)
+
+        for _ in range(melting_iterations):
+            tau = self.sample_hidden(sigma)
+            sigma = self.sample_visible(tau)
+
+        for _ in range(num_states):
+            tau = self.sample_hidden(sigma)
+            sigma = self.sample_visible(tau)
+            states.append(sigma.copy())
+
+        return np.array(states)
 
     def display_epsilon_w(self,filename):
         

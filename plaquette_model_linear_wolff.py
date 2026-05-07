@@ -201,7 +201,7 @@ def generate_training_data(numsteps, J1):
     spins = np.random.choice([-1,1], size = (N,N))
     beta = 1/T
    
-    data_set_amount = 5000
+    data_set_amount = 20000
     data_set = []
     for step in tqdm(range(numsteps)):
         spins = wolff_cluster_logic(N,T,J,J1,K,spins)

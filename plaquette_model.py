@@ -180,7 +180,7 @@ def linear_fit_data(spin_spin_correlations_array, energy_array):
     return j_values, E0
 
 def main():
-    T = 2.493
+    T = 2.490
     N = 40
     K = 0.2
     J = 1
@@ -236,5 +236,32 @@ def main_load():
     ac, m_amount = autocorrelation(magnetization_array)
     
     display_autocorrelation(ac, m_amount)
-main()
-#main_load()
+
+def main_train():
+
+    T = 2.490
+    N = 40
+    K = 0.2
+    J = 1
+
+    equilibrium_spins = 300*(N**2)
+    equilibrium_spins = 0
+
+    spins = np.random.choice([-1,1], size = (N,N))
+    beta = 1/T
+   
+
+    data_set = []
+    for step in tqdm(range(30000*(N**2))):
+        spins = metropolis_step(spins, J, K, beta)
+        
+        if step>equilibrium_spins and step % N**2 == 0:
+            data_set.append(spins)
+        
+                    
+           
+
+    filename = "naive_data_set.npz"
+    np.savez(filename, data_set=data_set)
+
+main_train()

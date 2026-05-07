@@ -85,14 +85,14 @@ def run_one_temperature(args):
 
 
 def main():
-    temps = np.linspace(2, 4, 30)
+    temps = np.linspace(2, 3, 30)
     L = [10,20,40]
 
     K = 0.2
     J = 1
 
     n_thermal = 300
-    n_measure = 100000
+    n_measure = 50000
 
     tasks = [(length, temp, J, K, n_thermal, n_measure)
              for length in L for temp in temps]
@@ -107,6 +107,8 @@ def main():
 
     color_dict = {10:"firebrick",20:"goldenrod",40:"blueviolet"}
 
+    lr_array = []
+
     plt.figure()
     for length in L:
         length_results = [
@@ -114,8 +116,10 @@ def main():
             for result_length, temp, B4 in results
             if result_length == length
         ]
-
+    
         length_results.sort(key=lambda x: x[0])
+        
+        lr_array.append(length_results)
 
         temps_sorted = [x[0] for x in length_results]
         B4s_sorted = [x[1] for x in length_results]
@@ -129,6 +133,8 @@ def main():
             color=color_dict[length]
         )
 
+    lr_array = np.array(lr_array)
+    np.savez("b4_data.npz")
     plt.xlabel(r"$T$")
     plt.ylabel(r"$B_{4}$", rotation=0)
     plt.legend()
